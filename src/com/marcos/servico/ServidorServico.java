@@ -21,20 +21,20 @@ import java.util.logging.Logger;
  *
  * @author trabalho
  */
-public class ServidorService {
+public class ServidorServico {
 
     private ServerSocket serverSocket;
     private Socket socket;
 
-    //Lista dos usuários conectados
+    //Lista dos usuarios conectados
     private Map<String, ObjectOutputStream> mapOnlines = new HashMap<String, ObjectOutputStream>();
 
-    public ServidorService() {
+    public ServidorServico() {
         try {
             serverSocket = new ServerSocket(5557);
 
             while (true) {
-                System.out.println("Aguardando conexão...");
+                System.out.println("Aguardando conexao...");
                 socket = serverSocket.accept();
                 System.out.println("Cliente conectado...");
 
@@ -42,7 +42,7 @@ public class ServidorService {
                 new Thread(new threadAtenderCliente(socket)).start();
             }
         } catch (IOException ex) {
-            Logger.getLogger(ServidorService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -56,7 +56,7 @@ public class ServidorService {
                 this.output = new ObjectOutputStream(socket.getOutputStream());
                 this.input = new ObjectInputStream(socket.getInputStream());
             } catch (IOException ex) {
-                Logger.getLogger(ServidorService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -87,7 +87,7 @@ public class ServidorService {
                     } else if (action.equals(Action.DISCONECT)) {
                         //Cliente desconectou
                         disconnect(message, output);
-                        return;//Forçar saída do while
+                        return;//Forcar saída do while
                     } else if (action.equals(Action.SEND_ONE)) {
                         //Envia mensagem a um cliente
                         sendOne(message, output);
@@ -98,15 +98,15 @@ public class ServidorService {
                     }
                 }
             } catch (IOException ex) {
-                System.out.println("Exceção: " + ex);
+                System.out.println("Excecao: " + ex);
                 disconnect(message, output);
 
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(ServidorService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        //Método para conexao do cliente
+        //Metodo para conexao do cliente
         private boolean connect(Mensagem message, ObjectOutputStream output) {
             for (Map.Entry<String, ObjectOutputStream> kv : mapOnlines.entrySet()) {
                 if (kv.getKey().equalsIgnoreCase(message.getName())) {
@@ -121,7 +121,7 @@ public class ServidorService {
             return true;
         }
 
-        //Método para desconexão do cliente
+        //Metodo para desconexão do cliente
         public void disconnect(Mensagem message, ObjectOutputStream output) {
             mapOnlines.remove(message.getName());
             message.setText(message.getName() + " saiu da sala");
@@ -130,23 +130,23 @@ public class ServidorService {
             System.out.println(message.getName() + " Saiu da sala.");
         }
 
-        //Método para enviar mensagem a um cliente
+        //Metodo para enviar mensagem a um cliente
         private void sendOne(Mensagem message, ObjectOutputStream output) {
             try {
                 output.writeObject(message);
             } catch (IOException ex) {
-                Logger.getLogger(ServidorService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        //Método para enviar mensagem a todos os Clientes
+        //Metodo para enviar mensagem a todos os Clientes
         private void sendAll(Mensagem message) {
             for (Map.Entry<String, ObjectOutputStream> kv : mapOnlines.entrySet()) {
                 if (!kv.getKey().equals(message.getName())) {
                     try {
                         kv.getValue().writeObject(message);
                     } catch (IOException ex) {
-                        Logger.getLogger(ServidorService.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
