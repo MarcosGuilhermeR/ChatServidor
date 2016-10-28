@@ -10,8 +10,14 @@ import com.marcos.entidade.Mensagem.Action;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,9 +38,9 @@ public class ServidorServico {
     public ServidorServico() {
         try {
             serverSocket = new ServerSocket(5557);
-
+            new Thread(new UDPThread()).start();
             while (true) {
-                System.out.println("Aguardando conexao...");
+                System.out.println("Aguardando conexao TCP...");
                 socket = serverSocket.accept();
                 System.out.println("Cliente conectado...");
 
@@ -149,6 +155,81 @@ public class ServidorServico {
                         Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
+            }
+        }
+    }
+
+    //Thread Para Receber Mensagens UDPs
+    public class UDPThread implements Runnable {
+
+        InetAddress IPAddress; //Armazena endereco do Servidor    
+
+        @Override
+        public void run() {
+
+            DatagramSocket receptorSocket = null;
+            try {
+                IPAddress = InetAddress.getByName("239.255.255.255");
+                receptorSocket = new DatagramSocket(5556);
+                //receptorSocket.joinGroup(IPAddress);
+            } catch (SocketException ex) {
+                Logger.getLogger(UDPThread.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            while (true) {
+                System.out.println("Aguardando Requisição UDP");
+                byte[] receiveData = new byte[1024];
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                try {
+                    receptorSocket.receive(receivePacket);
+                } catch (IOException ex) {
+                    Logger.getLogger(UDPThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                String sentence = new String(receivePacket.getData());
+                System.out.println("Mensagem " + sentence + " recebida de: " + receivePacket.getAddress());
+
+                byte[] sendData = new byte[1024];
+
+                sendData = sentence.getBytes();
+                int porta = 5555; //Porta de conexao do grupo multicast
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
+                DatagramSocket clientSocket;
+
+                sentence = sentence.trim();
+                try {
+                    Thread.currentThread().sleep(1000); // 1 segundo
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                if (sentence.equals("status")) {
+                    try {
+                        String sentenceOK = "ok";
+
+                        byte[] sendData2 = new byte[1024];
+
+                        sendData2 = sentenceOK.getBytes();
+
+                        sendPacket = new DatagramPacket(sendData2, sendData2.length, IPAddress, porta);
+
+                        clientSocket = new DatagramSocket();
+                        clientSocket.send(sendPacket);
+                        System.out.println("Mensagem Enviada");
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                try {
+                    clientSocket = new DatagramSocket();
+                    clientSocket.send(sendPacket);
+                    System.out.println("Mensagem Enviada");
+                } catch (IOException ex) {
+                    Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
             }
         }
     }
