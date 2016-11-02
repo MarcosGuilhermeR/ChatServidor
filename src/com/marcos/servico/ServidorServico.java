@@ -42,7 +42,7 @@ public class ServidorServico {
             while (true) {
                 System.out.println("Aguardando conexao TCP...");
                 socket = serverSocket.accept();
-                System.out.println("Cliente conectado...");
+                System.out.println("Cliente conectado..." + socket.getInetAddress());
 
                 //Thread para atender o cliente
                 new Thread(new threadAtenderCliente(socket)).start();
@@ -221,15 +221,15 @@ public class ServidorServico {
                     } catch (IOException ex) {
                         Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                } else {
+                    try {
+                        clientSocket = new DatagramSocket();
+                        clientSocket.send(sendPacket);
+                        System.out.println("Mensagem Enviada");
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-                try {
-                    clientSocket = new DatagramSocket();
-                    clientSocket.send(sendPacket);
-                    System.out.println("Mensagem Enviada");
-                } catch (IOException ex) {
-                    Logger.getLogger(ServidorServico.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
             }
         }
     }
